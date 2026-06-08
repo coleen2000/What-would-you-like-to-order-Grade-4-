@@ -1,0 +1,1474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🍔 Restaurant Rush!</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;800&display=swap');
+:root{
+  --yellow:#FFD93D; --orange:#FF6B35; --red:#FF3366;
+  --green:#06D6A0;  --blue:#118AB2;   --purple:#845EC2;
+  --pink:#FF6FA8;   --bg:#FFF8E7;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Nunito',sans-serif;background:#1a0a00;min-height:100vh;overflow-x:hidden;}
+h1,h2,h3,.ff{font-family:'Fredoka One',cursive;}
+.screen{display:none;min-height:100vh;position:relative;}
+.screen.active{display:flex;flex-direction:column;}
+
+/* ============ ROBLOX RESTAURANT BG ============ */
+.rbg{position:absolute;inset:0;z-index:0;overflow:hidden;}
+.rbg::after{
+  content:'';position:absolute;inset:0;z-index:1;
+  background:rgba(0,0,0,0.52);
+  pointer-events:none;
+}
+
+/* ============ TITLE SCREEN ============ */
+#title-screen{align-items:center;justify-content:center;min-height:100vh;}
+.title-content{
+  position:relative;z-index:2;text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:20px;
+  padding:30px 20px;
+}
+.title-logo{
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(56px,10vw,110px);
+  color:#FFD93D;
+  text-shadow:
+    0 0 0 #FFD93D,
+    4px 4px 0 #FF6B35,
+    8px 8px 0 #C84000,
+    12px 12px 20px rgba(0,0,0,0.5);
+  letter-spacing:2px;
+  line-height:1;
+  animation:titleBounce 2s ease-in-out infinite;
+}
+.title-logo span{color:#FF6FA8;}
+.title-tagline{
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(18px,3vw,28px);
+  color:#fff;
+  text-shadow:2px 2px 8px rgba(0,0,0,0.8);
+  background:rgba(0,0,0,0.35);
+  padding:8px 28px;border-radius:40px;
+  border:2px solid rgba(255,217,61,0.4);
+  letter-spacing:1px;
+}
+.title-chars-row{
+  display:flex;gap:clamp(20px,4vw,60px);
+  justify-content:center;align-items:flex-end;
+  flex-wrap:wrap;
+}
+.tc-wrap{text-align:center;}
+.tc-label{
+  font-family:'Fredoka One',cursive;font-size:15px;color:#FFD93D;
+  margin-top:8px;text-shadow:1px 1px 4px rgba(0,0,0,0.8);
+}
+.play-btn{
+  font-family:'Fredoka One',cursive;font-size:32px;
+  background:linear-gradient(135deg,#FFD93D,#FF6B35);
+  color:#fff;border:none;border-radius:24px;
+  padding:18px 60px;cursor:pointer;
+  box-shadow:0 8px 0 #C84000,0 12px 30px rgba(0,0,0,0.4);
+  text-shadow:2px 2px 0 rgba(0,0,0,0.25);
+  transition:all 0.15s;touch-action:manipulation;
+  letter-spacing:1px;
+}
+.play-btn:hover{transform:translateY(-4px);box-shadow:0 12px 0 #C84000,0 16px 36px rgba(0,0,0,0.4);}
+.play-btn:active{transform:translateY(6px);box-shadow:0 2px 0 #C84000;}
+.tip{font-size:13px;color:rgba(255,255,255,0.55);font-weight:700;}
+
+/* ============ CONVERSATION SCREEN ============ */
+#conv-screen{min-height:100vh;flex-direction:column;}
+.conv-stage{
+  flex:1;display:flex;flex-direction:column;
+  position:relative;z-index:1;
+  justify-content:flex-end;
+  min-height:100vh;
+}
+/* Three characters across the bottom */
+.chars-row{
+  display:flex;justify-content:space-around;align-items:flex-end;
+  padding:0 2% 0;position:relative;z-index:2;
+  pointer-events:none;
+}
+.char-slot{
+  display:flex;flex-direction:column;align-items:center;
+  position:relative;flex:1;max-width:240px;
+}
+/* Speech bubble above character */
+.char-bubble{
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(13px,2vw,17px);
+  background:#fff;color:#333;
+  border-radius:20px;padding:12px 16px;
+  box-shadow:0 6px 24px rgba(0,0,0,0.35);
+  border:3px solid #FFD93D;
+  max-width:220px;text-align:center;
+  position:relative;line-height:1.4;
+  margin-bottom:10px;
+  opacity:0;transform:translateY(10px) scale(0.92);
+  transition:opacity 0.35s ease,transform 0.35s ease;
+  min-height:52px;display:flex;align-items:center;justify-content:center;
+}
+.char-bubble.visible{opacity:1;transform:translateY(0) scale(1);}
+.char-bubble::after{
+  content:'';position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);
+  border:8px solid transparent;border-top-color:#FFD93D;
+}
+.char-bubble.cb-cashier{border-color:#118AB2;}
+.char-bubble.cb-cashier::after{border-top-color:#118AB2;}
+.char-bubble.cb-c1{border-color:#06D6A0;}
+.char-bubble.cb-c1::after{border-top-color:#06D6A0;}
+.char-bubble.cb-c2{border-color:#845EC2;}
+.char-bubble.cb-c2::after{border-top-color:#845EC2;}
+
+.char-name-tag{
+  font-family:'Fredoka One',cursive;font-size:14px;
+  padding:3px 14px;border-radius:20px;margin-bottom:6px;color:#fff;
+}
+.tag-cashier{background:#118AB2;}
+.tag-c1{background:#06D6A0;color:#003;}
+.tag-c2{background:#845EC2;}
+
+/* Next button */
+.conv-next-btn{
+  position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:20;
+  font-family:'Fredoka One',cursive;font-size:22px;
+  background:linear-gradient(135deg,#FFD93D,#FF6B35);
+  color:#fff;border:none;border-radius:22px;
+  padding:16px 40px;cursor:pointer;
+  box-shadow:0 6px 0 #C84000,0 10px 28px rgba(0,0,0,0.45);
+  touch-action:manipulation;white-space:nowrap;
+  letter-spacing:0.5px;text-shadow:1px 1px 0 rgba(0,0,0,0.2);
+  display:none;animation:btnPop 0.4s cubic-bezier(.34,1.56,.64,1);
+}
+.conv-next-btn:active{transform:translateX(-50%) translateY(4px);box-shadow:0 2px 0 #C84000;}
+@keyframes btnPop{
+  0%{transform:translateX(-50%) scale(0.7);opacity:0;}
+  100%{transform:translateX(-50%) scale(1);opacity:1;}
+}
+
+/* ============ ORDER SCREEN ============ */
+#order-screen{background:linear-gradient(180deg,#FFF3DC,#FFF8ED);}
+.order-header{
+  background:linear-gradient(90deg,var(--orange),#FF8C42);
+  color:#fff;padding:14px 24px;
+  display:flex;align-items:center;justify-content:space-between;
+  box-shadow:0 4px 16px rgba(0,0,0,0.15);position:relative;z-index:2;
+}
+.order-header h2{font-size:24px;}
+.step-badge{
+  background:rgba(255,255,255,0.25);border:2px solid rgba(255,255,255,0.5);
+  border-radius:20px;padding:5px 16px;font-size:14px;font-weight:800;
+}
+/* Two-panel layout: left = current character + bubble, right = menu */
+.order-body{display:flex;flex:1;overflow:hidden;position:relative;z-index:1;}
+.order-char-panel{
+  width:260px;min-width:220px;
+  background:rgba(255,248,237,0.97);
+  border-right:3px dashed var(--yellow);
+  padding:18px 14px;
+  display:flex;flex-direction:column;align-items:center;gap:12px;
+  overflow-y:auto;
+}
+.order-char-stage{
+  background:linear-gradient(160deg,#FFF8ED,#FFF0D0);
+  border-radius:20px;padding:14px 10px 10px;
+  text-align:center;border:2px solid #E8C87A;width:100%;
+}
+.order-char-name{font-family:'Fredoka One',cursive;font-size:18px;color:var(--blue);margin-top:6px;}
+.order-char-role{font-size:11px;color:#AAA;font-weight:700;}
+.order-speech{
+  background:var(--blue);color:#fff;
+  border-radius:16px 16px 16px 4px;
+  padding:11px 14px;font-size:14px;font-weight:700;
+  line-height:1.45;width:100%;
+  box-shadow:0 4px 12px rgba(17,138,178,0.22);
+}
+.order-speech.green{background:var(--green);border-radius:16px 16px 4px 16px;}
+.order-speech.yellow{background:linear-gradient(135deg,var(--yellow),var(--orange));color:#5A2A00;border-radius:14px;text-align:center;font-size:13px;}
+
+.action-panel{flex:1;padding:18px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;}
+.menu-section h3{font-size:19px;color:var(--orange);margin-bottom:8px;}
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(125px,1fr));gap:9px;}
+.menu-item{
+  background:white;border:3px solid #eee;border-radius:16px;
+  padding:13px 7px 9px;text-align:center;cursor:pointer;
+  transition:all 0.17s;font-size:12px;font-weight:700;color:#333;
+  box-shadow:0 3px 8px rgba(0,0,0,0.07);min-height:96px;
+  touch-action:manipulation;position:relative;overflow:hidden;
+}
+.menu-item:hover{border-color:var(--orange);transform:translateY(-3px);box-shadow:0 8px 18px rgba(255,107,53,0.22);}
+.menu-item.selected{border-color:var(--green);background:#E8FFF9;}
+.menu-item.selected::after{content:'✓';position:absolute;top:5px;right:7px;color:var(--green);font-size:15px;font-weight:900;}
+.menu-item .food-emoji{font-size:34px;display:block;margin-bottom:5px;}
+.menu-item .food-name{line-height:1.3;}
+.order-basket{
+  background:white;border-radius:18px;padding:14px;
+  border:3px dashed var(--green);min-height:64px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.05);
+}
+.order-basket h4{font-family:'Fredoka One',cursive;font-size:16px;color:var(--green);margin-bottom:8px;}
+.basket-items{display:flex;flex-wrap:wrap;gap:7px;}
+.basket-tag{
+  background:var(--green);color:#fff;border-radius:20px;
+  padding:5px 11px;font-size:12px;font-weight:700;
+  display:flex;align-items:center;gap:5px;
+  animation:popIn 0.25s cubic-bezier(.34,1.56,.64,1);
+  box-shadow:0 3px 8px rgba(6,214,160,0.3);
+}
+.basket-tag .rm{
+  background:rgba(0,0,0,0.18);border:none;color:#fff;border-radius:50%;
+  width:17px;height:17px;cursor:pointer;font-size:10px;
+  display:flex;align-items:center;justify-content:center;touch-action:manipulation;
+}
+.sentence-display{
+  background:linear-gradient(135deg,var(--purple),var(--pink));
+  color:#fff;border-radius:14px;padding:12px 16px;
+  font-size:16px;font-weight:700;text-align:center;
+  min-height:52px;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 6px 16px rgba(132,92,194,0.28);line-height:1.4;
+}
+.big-btn{
+  padding:14px 26px;font-size:19px;font-family:'Fredoka One',cursive;
+  border:none;border-radius:16px;cursor:pointer;transition:all 0.17s;
+  box-shadow:0 6px 0 rgba(0,0,0,0.17);width:100%;touch-action:manipulation;
+}
+.big-btn:hover{transform:translateY(-2px);filter:brightness(1.07);}
+.big-btn:active{transform:translateY(5px);box-shadow:0 1px 0 rgba(0,0,0,0.17);}
+.big-btn.green{background:linear-gradient(135deg,var(--green),#04B080);color:#fff;}
+.big-btn.orange{background:linear-gradient(135deg,var(--orange),#E04010);color:#fff;}
+.big-btn.blue{background:linear-gradient(135deg,var(--blue),#0A6A8A);color:#fff;}
+
+/* ============ GAME SCREEN ============ */
+#game-screen{background:#130800;flex-direction:column;}
+.game-header{
+  background:linear-gradient(90deg,#0a0400,#1e0c00);
+  color:#fff;padding:8px 18px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:3px solid var(--yellow);
+}
+.game-header h2{font-size:19px;color:var(--yellow);}
+.timer-display{
+  font-family:'Fredoka One',cursive;font-size:44px;color:var(--yellow);
+  text-shadow:0 0 16px rgba(255,217,61,0.6);min-width:66px;text-align:center;
+}
+.timer-display.warning{color:#FF4466;animation:pulse 0.45s infinite;}
+.game-panels{display:flex;flex:1;overflow:hidden;}
+.cashier-panel{
+  flex:1;display:flex;flex-direction:column;
+  border-right:3px solid #3a1800;overflow:hidden;
+  background:linear-gradient(180deg,#0a2040,#050f22);
+}
+.panel-hdr{
+  padding:9px 12px;font-family:'Fredoka One',cursive;font-size:15px;
+  color:#fff;display:flex;align-items:center;justify-content:space-between;
+  background:rgba(0,0,0,0.28);border-bottom:2px solid rgba(255,255,255,0.06);
+}
+.pscore{font-size:21px;color:var(--yellow);}
+.plabel{padding:4px 13px;border-radius:14px;font-size:13px;}
+.plabel.lc{background:linear-gradient(135deg,#118AB2,#0A6A8A);}
+.plabel.l1{background:linear-gradient(135deg,#06D6A0,#04B080);}
+.plabel.l2{background:linear-gradient(135deg,#845EC2,#6A48A2);}
+.orders-remind{
+  background:rgba(255,255,255,0.06);margin:6px 10px 4px;
+  border-radius:10px;padding:7px 11px;font-size:12px;color:#90B8D8;
+  border:1px solid rgba(255,255,255,0.08);
+}
+.orders-remind strong{color:var(--yellow);display:block;margin-bottom:2px;font-size:12px;font-family:'Fredoka One',cursive;}
+.cashier-arena{flex:1;position:relative;overflow:hidden;cursor:crosshair;}
+.floating-food{
+  position:absolute;width:80px;height:80px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:46px;border-radius:50%;cursor:pointer;
+  background:radial-gradient(circle at 35% 35%,rgba(255,255,255,0.22),rgba(255,255,255,0.04));
+  border:3px solid rgba(255,255,255,0.16);
+  transition:transform 0.07s;user-select:none;
+  box-shadow:0 6px 18px rgba(0,0,0,0.45),inset 0 1px 0 rgba(255,255,255,0.16);
+  touch-action:none;
+}
+.floating-food:hover{transform:scale(1.2) rotate(-6deg)!important;border-color:rgba(255,255,255,0.5);}
+.floating-food.cf{background:radial-gradient(circle,rgba(6,214,160,.65),rgba(6,214,160,.18))!important;border-color:var(--green)!important;}
+.floating-food.wf{background:radial-gradient(circle,rgba(255,51,102,.65),rgba(255,51,102,.18))!important;border-color:var(--red)!important;}
+.score-pop{
+  position:absolute;font-family:'Fredoka One',cursive;font-size:28px;
+  pointer-events:none;animation:scorePop 0.9s ease forwards;z-index:100;
+}
+.score-pop.p{color:var(--green);}
+.score-pop.m{color:#FF4466;}
+.customer-panel{flex:1;display:flex;flex-direction:column;border-right:3px solid #3a1800;overflow:hidden;}
+.customer-panel.c1{background:linear-gradient(180deg,#083020,#031810);}
+.customer-panel.c2{background:linear-gradient(180deg,#1a0840,#0d0428);}
+.money-arena{flex:1;position:relative;overflow:hidden;}
+.falling-money{
+  position:absolute;font-size:32px;animation:fallDown linear;
+  user-select:none;filter:drop-shadow(0 3px 6px rgba(0,0,0,0.4));
+}
+.basket-catcher{
+  position:absolute;bottom:6px;width:78px;height:48px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:40px;transition:left 0.04s;cursor:none;
+  filter:drop-shadow(0 4px 10px rgba(0,0,0,0.5));
+}
+.wallet-bar{
+  background:rgba(0,0,0,0.3);padding:6px 12px;
+  font-family:'Fredoka One',cursive;font-size:19px;color:var(--yellow);
+  text-align:center;border-top:2px solid rgba(255,255,255,0.06);
+}
+.touch-controls{display:flex;justify-content:space-between;padding:7px 10px;background:rgba(0,0,0,0.35);}
+.touch-btn{
+  background:rgba(255,255,255,0.13);border:2px solid rgba(255,255,255,0.2);
+  color:#fff;font-size:28px;padding:13px 20px;border-radius:13px;
+  cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none;min-width:68px;text-align:center;
+}
+.touch-btn:active{background:rgba(255,255,255,0.32);transform:scale(0.93);}
+.key-hint{background:rgba(0,0,0,0.25);color:rgba(255,255,255,0.38);font-size:10px;text-align:center;padding:3px;}
+
+/* ============ PAYMENT SCREEN ============ */
+#payment-screen{align-items:center;justify-content:center;min-height:100vh;}
+.pay-bg{position:fixed;inset:0;z-index:0;background:linear-gradient(135deg,var(--yellow),var(--orange));}
+.payment-box{
+  position:relative;z-index:2;background:white;border-radius:28px;
+  padding:28px 32px;max-width:700px;width:95%;
+  box-shadow:0 24px 80px rgba(0,0,0,0.2);
+  animation:bounceIn 0.6s cubic-bezier(.34,1.56,.64,1);
+  overflow-y:auto;max-height:92vh;
+}
+.payment-box h2{font-size:32px;text-align:center;color:var(--orange);margin-bottom:18px;}
+.bill-section{display:flex;gap:14px;margin-bottom:16px;flex-wrap:wrap;}
+.bill-card{flex:1;min-width:180px;background:#F8F9FA;border-radius:16px;padding:14px;border:2px solid #EEE;}
+.bill-card h3{font-family:'Fredoka One',cursive;font-size:15px;margin-bottom:8px;}
+.bill-card h3.c1{color:var(--green);}
+.bill-card h3.c2{color:var(--purple);}
+.bill-item{display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-bottom:1px dashed #EEE;font-weight:700;}
+.bill-total{display:flex;justify-content:space-between;padding:9px 0 0;font-size:18px;font-family:'Fredoka One',cursive;color:var(--orange);}
+.payment-result{margin-bottom:14px;}
+.result-row{display:flex;align-items:center;gap:12px;padding:12px;border-radius:14px;margin-bottom:9px;font-size:15px;font-weight:700;}
+.result-row.success{background:#E8FFF9;border:3px solid var(--green);}
+.result-row.fail{background:#FFF0F4;border:3px solid var(--red);}
+.result-emoji{font-size:34px;}
+.result-text .label{font-size:11px;color:#AAA;font-weight:700;}
+.result-text .value{font-size:16px;font-family:'Fredoka One',cursive;}
+.result-text .value.success{color:var(--green);}
+.result-text .value.fail{color:var(--red);}
+.cashier-result{
+  background:linear-gradient(135deg,var(--blue),var(--purple));
+  color:#fff;border-radius:14px;padding:16px;text-align:center;margin-bottom:16px;
+}
+.cashier-result h3{font-size:18px;margin-bottom:5px;}
+.cashier-result .big-score{font-size:48px;font-family:'Fredoka One',cursive;}
+.dialogue-exchange{background:#F8F9FA;border-radius:14px;padding:13px;margin-bottom:14px;border:2px solid #EEE;}
+.d-line{display:flex;gap:7px;align-items:flex-start;margin-bottom:7px;font-size:13px;font-weight:700;}
+.d-who{min-width:96px;color:var(--orange);font-family:'Fredoka One',cursive;font-size:13px;}
+.d-say{background:white;border-radius:9px;padding:6px 11px;flex:1;color:#333;border:2px solid #EEE;}
+.confetti-container{position:fixed;inset:0;pointer-events:none;z-index:999;}
+.confetti-piece{position:absolute;border-radius:3px;animation:confettiFall linear forwards;}
+
+/* ============ ANIMATIONS ============ */
+@keyframes bounceIn{0%{transform:scale(0.5);opacity:0}70%{transform:scale(1.07)}100%{transform:scale(1);opacity:1}}
+@keyframes titleBounce{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-10px) rotate(1deg)}}
+@keyframes charBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes fadeSlideIn{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
+@keyframes popIn{0%{transform:scale(0) rotate(-10deg)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+@keyframes scorePop{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-68px) scale(1.6)}}
+@keyframes fallDown{from{top:-60px}to{top:110%}}
+@keyframes confettiFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+@keyframes twinkle{0%,100%{opacity:1}50%{opacity:0.3}}
+@keyframes floatFood{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-14px) rotate(3deg)}}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     TITLE SCREEN
+     ============================================================ -->
+<div id="title-screen" class="screen active">
+  <!-- Rich Roblox restaurant background -->
+  <div class="rbg">
+    <svg width="100%" height="100%" viewBox="0 0 1400 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <!-- Sky / ceiling gradient -->
+      <defs>
+        <linearGradient id="ceilGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#1a0800"/>
+          <stop offset="100%" stop-color="#3d1a00"/>
+        </linearGradient>
+        <linearGradient id="floorGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#8B5520"/>
+          <stop offset="100%" stop-color="#5A3008"/>
+        </linearGradient>
+        <linearGradient id="wallGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#F2D8A8"/>
+          <stop offset="100%" stop-color="#E8C888"/>
+        </linearGradient>
+        <pattern id="wallTile" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
+          <rect width="60" height="60" fill="none"/>
+          <circle cx="30" cy="30" r="2" fill="#C8A858" opacity="0.3"/>
+          <rect x="0" y="0" width="60" height="1" fill="#C8A858" opacity="0.15"/>
+          <rect x="0" y="0" width="1" height="60" fill="#C8A858" opacity="0.15"/>
+        </pattern>
+        <pattern id="floorTile" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
+          <rect width="100" height="100" fill="#9B6020"/>
+          <rect x="2" y="2" width="46" height="46" rx="4" fill="#B07030" opacity="0.7"/>
+          <rect x="52" y="52" width="46" height="46" rx="4" fill="#B07030" opacity="0.7"/>
+          <rect x="52" y="2" width="46" height="46" rx="4" fill="#A06020" opacity="0.5"/>
+          <rect x="2" y="52" width="46" height="46" rx="4" fill="#A06020" opacity="0.5"/>
+        </pattern>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+          <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+
+      <!-- CEILING -->
+      <rect width="1400" height="160" fill="url(#ceilGrad)"/>
+      <!-- Ceiling beams -->
+      <rect x="0" y="140" width="1400" height="18" fill="#2a1000"/>
+      <rect x="200" y="0" width="22" height="160" fill="#1e0c00" opacity="0.6"/>
+      <rect x="550" y="0" width="22" height="160" fill="#1e0c00" opacity="0.6"/>
+      <rect x="900" y="0" width="22" height="160" fill="#1e0c00" opacity="0.6"/>
+      <rect x="1250" y="0" width="22" height="160" fill="#1e0c00" opacity="0.6"/>
+
+      <!-- HANGING PENDANT LIGHTS -->
+      <!-- Light 1 -->
+      <line x1="110" y1="0" x2="110" y2="100" stroke="#5a3010" stroke-width="4"/>
+      <ellipse cx="110" cy="116" rx="36" ry="22" fill="#3a1a00"/>
+      <ellipse cx="110" cy="108" rx="28" ry="16" fill="#FFD93D" filter="url(#glow)" opacity="0.95"/>
+      <ellipse cx="110" cy="104" rx="18" ry="10" fill="#FFF0A0"/>
+      <ellipse cx="110" cy="108" rx="36" ry="22" fill="none" stroke="#5a3010" stroke-width="3"/>
+      <ellipse cx="110" cy="108" rx="26" ry="50" fill="#FFD93D" opacity="0.08"/>
+      <!-- Light 2 -->
+      <line x1="380" y1="0" x2="380" y2="88" stroke="#5a3010" stroke-width="4"/>
+      <ellipse cx="380" cy="104" rx="36" ry="22" fill="#3a1a00"/>
+      <ellipse cx="380" cy="96" rx="28" ry="16" fill="#FFD93D" filter="url(#glow)" opacity="0.95"/>
+      <ellipse cx="380" cy="92" rx="18" ry="10" fill="#FFF0A0"/>
+      <ellipse cx="380" cy="104" rx="36" ry="22" fill="none" stroke="#5a3010" stroke-width="3"/>
+      <!-- Light 3 -->
+      <line x1="700" y1="0" x2="700" y2="94" stroke="#5a3010" stroke-width="4"/>
+      <ellipse cx="700" cy="110" rx="36" ry="22" fill="#3a1a00"/>
+      <ellipse cx="700" cy="102" rx="28" ry="16" fill="#FFD93D" filter="url(#glow)" opacity="0.95"/>
+      <ellipse cx="700" cy="98" rx="18" ry="10" fill="#FFF0A0"/>
+      <ellipse cx="700" cy="110" rx="36" ry="22" fill="none" stroke="#5a3010" stroke-width="3"/>
+      <!-- Light 4 -->
+      <line x1="1020" y1="0" x2="1020" y2="88" stroke="#5a3010" stroke-width="4"/>
+      <ellipse cx="1020" cy="104" rx="36" ry="22" fill="#3a1a00"/>
+      <ellipse cx="1020" cy="96" rx="28" ry="16" fill="#FFD93D" filter="url(#glow)" opacity="0.95"/>
+      <ellipse cx="1020" cy="92" rx="18" ry="10" fill="#FFF0A0"/>
+      <ellipse cx="1020" cy="104" rx="36" ry="22" fill="none" stroke="#5a3010" stroke-width="3"/>
+      <!-- Light 5 -->
+      <line x1="1310" y1="0" x2="1310" y2="100" stroke="#5a3010" stroke-width="4"/>
+      <ellipse cx="1310" cy="116" rx="36" ry="22" fill="#3a1a00"/>
+      <ellipse cx="1310" cy="108" rx="28" ry="16" fill="#FFD93D" filter="url(#glow)" opacity="0.95"/>
+      <ellipse cx="1310" cy="104" rx="18" ry="10" fill="#FFF0A0"/>
+      <ellipse cx="1310" cy="108" rx="36" ry="22" fill="none" stroke="#5a3010" stroke-width="3"/>
+
+      <!-- WALL -->
+      <rect x="0" y="158" width="1400" height="430" fill="url(#wallGrad)"/>
+      <rect x="0" y="158" width="1400" height="430" fill="url(#wallTile)"/>
+      <!-- Wainscoting / dado rail -->
+      <rect x="0" y="500" width="1400" height="14" fill="#8B5520"/>
+      <rect x="0" y="510" width="1400" height="6" fill="#C8884A"/>
+
+      <!-- WINDOWS (Roblox-style pixelated frames) -->
+      <!-- Window left -->
+      <rect x="60" y="190" width="200" height="240" rx="0" fill="#1a3a6a"/>
+      <rect x="64" y="194" width="192" height="232" fill="#87CEEB" opacity="0.7"/>
+      <!-- Window panes -->
+      <rect x="60" y="190" width="200" height="240" fill="none" stroke="#5a3010" stroke-width="10"/>
+      <rect x="160" y="190" width="8" height="240" fill="#5a3010"/>
+      <rect x="60" y="308" width="200" height="8" fill="#5a3010"/>
+      <!-- Window sun/outside -->
+      <circle cx="220" cy="240" r="30" fill="#FFD93D" opacity="0.5"/>
+      <!-- Curtains -->
+      <path d="M60,190 Q82,260 66,430 L60,430Z" fill="#FF6B35" opacity="0.85"/>
+      <path d="M260,190 Q238,260 254,430 L260,430Z" fill="#FF6B35" opacity="0.85"/>
+      <!-- Curtain tie left -->
+      <ellipse cx="72" cy="320" rx="12" ry="8" fill="#C84000"/>
+      <ellipse cx="248" cy="320" rx="12" ry="8" fill="#C84000"/>
+
+      <!-- Window right -->
+      <rect x="1140" y="190" width="200" height="240" fill="#1a3a6a"/>
+      <rect x="1144" y="194" width="192" height="232" fill="#87CEEB" opacity="0.7"/>
+      <rect x="1140" y="190" width="200" height="240" fill="none" stroke="#5a3010" stroke-width="10"/>
+      <rect x="1240" y="190" width="8" height="240" fill="#5a3010"/>
+      <rect x="1140" y="308" width="200" height="8" fill="#5a3010"/>
+      <circle cx="1180" cy="240" r="30" fill="#FFD93D" opacity="0.5"/>
+      <path d="M1140,190 Q1162,260 1146,430 L1140,430Z" fill="#FF6FA8" opacity="0.85"/>
+      <path d="M1340,190 Q1318,260 1334,430 L1340,430Z" fill="#FF6FA8" opacity="0.85"/>
+      <ellipse cx="1152" cy="320" rx="12" ry="8" fill="#CC3080"/>
+      <ellipse cx="1328" cy="320" rx="12" ry="8" fill="#CC3080"/>
+
+      <!-- MENU CHALKBOARD (center wall) -->
+      <rect x="480" y="170" width="440" height="250" rx="8" fill="#1a0c00"/>
+      <rect x="490" y="180" width="420" height="230" rx="4" fill="#0d2a18"/>
+      <rect x="480" y="170" width="440" height="250" rx="8" fill="none" stroke="#5a3010" stroke-width="8"/>
+      <!-- Chalk decorations -->
+      <text x="700" y="220" text-anchor="middle" font-family="'Fredoka One',cursive" font-size="26" fill="#FFD93D">✦ TODAY'S MENU ✦</text>
+      <line x1="510" y1="232" x2="890" y2="232" stroke="#FFD93D" stroke-width="1.5" opacity="0.5" stroke-dasharray="8,4"/>
+      <text x="700" y="258" text-anchor="middle" font-family="Nunito,sans-serif" font-size="14" fill="#B8E0C8" font-weight="700">🍔 Hamburger  🍕 Pizza  🍜 Noodles</text>
+      <text x="700" y="280" text-anchor="middle" font-family="Nunito,sans-serif" font-size="14" fill="#B8E0C8" font-weight="700">🍣 Sushi  🌮 Taco  🍟 Fries  🍗 Chicken</text>
+      <text x="700" y="302" text-anchor="middle" font-family="Nunito,sans-serif" font-size="14" fill="#B8E0C8" font-weight="700">🥤 Drinks  🍩 Desserts  &amp; More!</text>
+      <line x1="510" y1="314" x2="890" y2="314" stroke="#FFD93D" stroke-width="1.5" opacity="0.5" stroke-dasharray="8,4"/>
+      <text x="700" y="335" text-anchor="middle" font-family="Nunito,sans-serif" font-size="13" fill="#FFD93D" font-weight="700">★ All fresh &amp; delicious! ★</text>
+      <text x="700" y="358" text-anchor="middle" font-family="Nunito,sans-serif" font-size="12" fill="rgba(255,255,255,0.4)">Prices vary • Ask your cashier!</text>
+      <text x="700" y="394" text-anchor="middle" font-family="Nunito,sans-serif" font-size="20">🍽️ 🍴 🥄</text>
+
+      <!-- Decorative wall art / framed picture left -->
+      <rect x="310" y="210" width="150" height="120" rx="6" fill="#3a1800"/>
+      <rect x="316" y="216" width="138" height="108" rx="3" fill="#87CEEB" opacity="0.4"/>
+      <text x="385" y="280" text-anchor="middle" font-size="52">🌆</text>
+      <rect x="310" y="210" width="150" height="120" rx="6" fill="none" stroke="#8B5520" stroke-width="6"/>
+
+      <!-- Decorative right -->
+      <rect x="940" y="210" width="150" height="120" rx="6" fill="#3a1800"/>
+      <rect x="946" y="216" width="138" height="108" rx="3" fill="#FFD9A0" opacity="0.3"/>
+      <text x="1015" y="280" text-anchor="middle" font-size="52">🍽️</text>
+      <rect x="940" y="210" width="150" height="120" rx="6" fill="none" stroke="#8B5520" stroke-width="6"/>
+
+      <!-- COUNTER / COUNTER BAR (Roblox boxy style) -->
+      <rect x="0" y="516" width="1400" height="90" fill="#6B3A10"/>
+      <rect x="0" y="512" width="1400" height="12" fill="#A07030"/>
+      <rect x="0" y="600" width="1400" height="6" fill="#4a2808"/>
+      <!-- Counter top shine -->
+      <rect x="0" y="514" width="1400" height="4" fill="rgba(255,255,255,0.12)"/>
+      <!-- Counter panels (Roblox boxy) -->
+      <rect x="15"   y="528" width="188" height="58" rx="6" fill="#5a2e08" opacity="0.7"/>
+      <rect x="218"  y="528" width="188" height="58" rx="6" fill="#5a2e08" opacity="0.7"/>
+      <rect x="422"  y="528" width="188" height="58" rx="6" fill="#5a2e08" opacity="0.7"/>
+      <rect x="626"  y="528" width="188" height="58" rx="6" fill="#5a2e08" opacity="0.7"/>
+      <rect x="830"  y="528" width="188" height="58" rx="6" fill="#5a2e08" opacity="0.7"/>
+      <rect x="1034" y="528" width="188" height="58" rx="6" fill="#5a2e08" opacity="0.7"/>
+      <rect x="1238" y="528" width="148" height="58" rx="6" fill="#5a2e08" opacity="0.7"/>
+
+      <!-- Cash register (Roblox pixel style) -->
+      <rect x="560" y="460" width="280" height="60" rx="8" fill="#1a0800"/>
+      <rect x="570" y="468" width="260" height="44" rx="5" fill="#0a0400"/>
+      <rect x="578" y="474" width="160" height="30" rx="3" fill="#001a08"/>
+      <rect x="578" y="474" width="160" height="30" rx="3" fill="#06D6A0" opacity="0.1"/>
+      <text x="658" y="493" text-anchor="middle" font-family="'Fredoka One',cursive" font-size="13" fill="#FFD93D">$ REGISTER</text>
+      <rect x="748" y="474" width="72" height="30" rx="4" fill="#FF6B35"/>
+      <text x="784" y="493" text-anchor="middle" font-family="'Fredoka One',cursive" font-size="13" fill="white">PAY</text>
+      <!-- Register screen glow -->
+      <rect x="578" y="474" width="160" height="30" rx="3" fill="#06D6A0" opacity="0.05"/>
+
+      <!-- POTTED PLANTS -->
+      <!-- Left plant -->
+      <rect x="14" y="430" width="72" height="88" rx="8" fill="#8B5520"/>
+      <rect x="20" y="424" width="60" height="12" rx="6" fill="#A87030"/>
+      <ellipse cx="50" cy="410" rx="44" ry="36" fill="#2d6a1e"/>
+      <ellipse cx="32" cy="392" rx="24" ry="20" fill="#3a8228"/>
+      <ellipse cx="66" cy="396" rx="22" ry="18" fill="#3a8228"/>
+      <ellipse cx="50" cy="384" rx="20" ry="16" fill="#4aa030"/>
+      <!-- Right plant -->
+      <rect x="1314" y="430" width="72" height="88" rx="8" fill="#8B5520"/>
+      <rect x="1320" y="424" width="60" height="12" rx="6" fill="#A87030"/>
+      <ellipse cx="1350" cy="410" rx="44" ry="36" fill="#2d6a1e"/>
+      <ellipse cx="1332" cy="392" rx="24" ry="20" fill="#3a8228"/>
+      <ellipse cx="1366" cy="396" rx="22" ry="18" fill="#3a8228"/>
+      <ellipse cx="1350" cy="384" rx="20" ry="16" fill="#4aa030"/>
+
+      <!-- FLOOR -->
+      <rect x="0" y="606" width="1400" height="294" fill="url(#floorGrad)"/>
+      <rect x="0" y="606" width="1400" height="294" fill="url(#floorTile)" opacity="0.5"/>
+
+      <!-- FLOATING FOOD DECORATIONS (title screen deco) -->
+      <text x="60"   y="490" font-size="44" style="animation:floatFood 3s ease-in-out infinite" opacity="0.7">🍔</text>
+      <text x="1280" y="480" font-size="44" style="animation:floatFood 3.5s ease-in-out infinite;animation-delay:0.5s" opacity="0.7">🍕</text>
+      <text x="140"  y="620" font-size="36" style="animation:floatFood 2.8s ease-in-out infinite;animation-delay:1s" opacity="0.6">🍜</text>
+      <text x="1200" y="640" font-size="36" style="animation:floatFood 3.2s ease-in-out infinite;animation-delay:0.3s" opacity="0.6">🍣</text>
+      <text x="1100" y="490" font-size="38" style="animation:floatFood 2.5s ease-in-out infinite;animation-delay:1.2s" opacity="0.65">🌮</text>
+      <text x="260"  y="490" font-size="36" style="animation:floatFood 3.8s ease-in-out infinite;animation-delay:0.7s" opacity="0.6">🍩</text>
+
+      <!-- FESTIVE BUNTING -->
+      <path d="M0,165 Q175,200 350,165 Q525,130 700,165 Q875,200 1050,165 Q1225,130 1400,165" stroke="#C8884A" stroke-width="3" fill="none"/>
+      <polygon points="86,172 96,198 106,172"  fill="#FF6B35"/>
+      <polygon points="174,188 184,214 194,188" fill="#FFD93D"/>
+      <polygon points="262,180 272,206 282,180" fill="#06D6A0"/>
+      <polygon points="350,163 360,189 370,163" fill="#118AB2"/>
+      <polygon points="438,176 448,202 458,176" fill="#FF6FA8"/>
+      <polygon points="526,185 536,211 546,185" fill="#845EC2"/>
+      <polygon points="614,177 624,203 634,177" fill="#FF6B35"/>
+      <polygon points="700,163 710,189 720,163" fill="#FFD93D"/>
+      <polygon points="786,176 796,202 806,176" fill="#06D6A0"/>
+      <polygon points="874,185 884,211 894,185" fill="#FF6FA8"/>
+      <polygon points="962,177 972,203 982,177" fill="#118AB2"/>
+      <polygon points="1050,163 1060,189 1070,163" fill="#845EC2"/>
+      <polygon points="1138,172 1148,198 1158,172" fill="#FF6B35"/>
+      <polygon points="1226,180 1236,206 1246,180" fill="#FFD93D"/>
+      <polygon points="1314,188 1324,214 1334,188" fill="#06D6A0"/>
+    </svg>
+  </div>
+
+  <!-- Title content -->
+  <div class="title-content">
+    <!-- Roblox-style characters row on title -->
+    <div class="title-chars-row">
+      <div class="tc-wrap" style="animation:charBounce 2s ease-in-out infinite;animation-delay:0.2s">
+        <svg width="110" height="130" viewBox="0 0 100 118" id="tc-cashier" xmlns="http://www.w3.org/2000/svg"></svg>
+        <div class="tc-label">🧑‍💼 Cashier</div>
+      </div>
+      <div class="tc-wrap" style="animation:charBounce 2s ease-in-out infinite;animation-delay:0.6s">
+        <svg width="110" height="130" viewBox="0 0 100 118" id="tc-c1" xmlns="http://www.w3.org/2000/svg"></svg>
+        <div class="tc-label">👧 Customer 1</div>
+      </div>
+      <div class="tc-wrap" style="animation:charBounce 2s ease-in-out infinite;animation-delay:1s">
+        <svg width="110" height="130" viewBox="0 0 100 118" id="tc-c2" xmlns="http://www.w3.org/2000/svg"></svg>
+        <div class="tc-label">👦 Customer 2</div>
+      </div>
+    </div>
+    <div class="title-logo">Restaurant<br><span>Rush!</span></div>
+    <div class="title-tagline">🍕 ESL Ordering Game for Kids 🍔</div>
+    <button class="play-btn" onclick="startGame()">▶ PLAY NOW!</button>
+    <div class="tip">For 3 players on one screen • Smartboard ready!</div>
+  </div>
+</div>
+
+<!-- ============================================================
+     CONVERSATION SCREEN
+     ============================================================ -->
+<div id="conv-screen" class="screen">
+  <!-- Same rich restaurant background -->
+  <div class="rbg">
+    <svg width="100%" height="100%" viewBox="0 0 1400 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="cg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1a0800"/><stop offset="100%" stop-color="#3d1a00"/></linearGradient>
+        <linearGradient id="wg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#F2D8A8"/><stop offset="100%" stop-color="#E8C888"/></linearGradient>
+        <linearGradient id="fg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8B5520"/><stop offset="100%" stop-color="#5A3008"/></linearGradient>
+        <pattern id="wt2" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse"><circle cx="30" cy="30" r="2" fill="#C8A858" opacity="0.28"/><rect x="0" y="0" width="60" height="1" fill="#C8A858" opacity="0.12"/><rect x="0" y="0" width="1" height="60" fill="#C8A858" opacity="0.12"/></pattern>
+        <pattern id="ft2" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse"><rect width="100" height="100" fill="#9B6020"/><rect x="2" y="2" width="46" height="46" rx="4" fill="#B07030" opacity="0.7"/><rect x="52" y="52" width="46" height="46" rx="4" fill="#B07030" opacity="0.7"/><rect x="52" y="2" width="46" height="46" rx="4" fill="#A06020" opacity="0.5"/><rect x="2" y="52" width="46" height="46" rx="4" fill="#A06020" opacity="0.5"/></pattern>
+        <filter id="glow2"><feGaussianBlur stdDeviation="4" result="cb"/><feMerge><feMergeNode in="cb"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <rect width="1400" height="160" fill="url(#cg2)"/>
+      <rect x="0" y="140" width="1400" height="18" fill="#2a1000"/>
+      <line x1="110" y1="0" x2="110" y2="100" stroke="#5a3010" stroke-width="4"/>
+      <ellipse cx="110" cy="116" rx="36" ry="22" fill="#3a1a00"/>
+      <ellipse cx="110" cy="108" rx="28" ry="16" fill="#FFD93D" filter="url(#glow2)" opacity="0.95"/>
+      <ellipse cx="110" cy="104" rx="18" ry="10" fill="#FFF0A0"/>
+      <line x1="700" y1="0" x2="700" y2="94" stroke="#5a3010" stroke-width="4"/>
+      <ellipse cx="700" cy="110" rx="36" ry="22" fill="#3a1a00"/>
+      <ellipse cx="700" cy="102" rx="28" ry="16" fill="#FFD93D" filter="url(#glow2)" opacity="0.95"/>
+      <ellipse cx="700" cy="98" rx="18" ry="10" fill="#FFF0A0"/>
+      <line x1="1310" y1="0" x2="1310" y2="100" stroke="#5a3010" stroke-width="4"/>
+      <ellipse cx="1310" cy="116" rx="36" ry="22" fill="#3a1a00"/>
+      <ellipse cx="1310" cy="108" rx="28" ry="16" fill="#FFD93D" filter="url(#glow2)" opacity="0.95"/>
+      <ellipse cx="1310" cy="104" rx="18" ry="10" fill="#FFF0A0"/>
+      <rect x="0" y="158" width="1400" height="370" fill="url(#wg2)"/>
+      <rect x="0" y="158" width="1400" height="370" fill="url(#wt2)"/>
+      <rect x="0" y="520" width="1400" height="14" fill="#8B5520"/>
+      <rect x="480" y="170" width="440" height="230" rx="8" fill="#1a0c00"/>
+      <rect x="490" y="180" width="420" height="210" rx="4" fill="#0d2a18"/>
+      <rect x="480" y="170" width="440" height="230" rx="8" fill="none" stroke="#5a3010" stroke-width="8"/>
+      <text x="700" y="216" text-anchor="middle" font-family="'Fredoka One',cursive" font-size="22" fill="#FFD93D">✦ TODAY'S MENU ✦</text>
+      <text x="700" y="248" text-anchor="middle" font-family="Nunito,sans-serif" font-size="13" fill="#B8E0C8" font-weight="700">🍔 Hamburger  🍕 Pizza  🍜 Noodles  🍣 Sushi</text>
+      <text x="700" y="270" text-anchor="middle" font-family="Nunito,sans-serif" font-size="13" fill="#B8E0C8" font-weight="700">🌮 Taco  🍟 Fries  🍗 Chicken  🍩 Donut</text>
+      <text x="700" y="292" text-anchor="middle" font-family="Nunito,sans-serif" font-size="13" fill="#B8E0C8" font-weight="700">🥤 Drinks  🥗 Salad  🍚 Rice  🍿 Popcorn</text>
+      <text x="700" y="372" text-anchor="middle" font-family="Nunito,sans-serif" font-size="18">🍽️ 🍴 🥄</text>
+      <rect x="60"  y="188" width="190" height="210" fill="none" stroke="#5a3010" stroke-width="8"/>
+      <rect x="66"  y="194" width="178" height="198" fill="#7AA8D0" opacity="0.6"/>
+      <rect x="160" y="188" width="8"   height="210" fill="#5a3010"/>
+      <rect x="60"  y="290" width="190" height="8"   fill="#5a3010"/>
+      <path d="M60,188 Q80,250 64,398 L60,398Z"   fill="#FF6B35" opacity="0.82"/>
+      <path d="M250,188 Q230,250 246,398 L250,398Z" fill="#FF6B35" opacity="0.82"/>
+      <rect x="1150" y="188" width="190" height="210" fill="none" stroke="#5a3010" stroke-width="8"/>
+      <rect x="1156" y="194" width="178" height="198" fill="#7AA8D0" opacity="0.6"/>
+      <rect x="1246" y="188" width="8"   height="210" fill="#5a3010"/>
+      <rect x="1150" y="290" width="190" height="8"   fill="#5a3010"/>
+      <path d="M1150,188 Q1170,250 1154,398 L1150,398Z" fill="#FF6FA8" opacity="0.82"/>
+      <path d="M1340,188 Q1320,250 1336,398 L1340,398Z" fill="#FF6FA8" opacity="0.82"/>
+      <rect x="0"  y="534" width="1400" height="80"  fill="#6B3A10"/>
+      <rect x="0"  y="530" width="1400" height="10"  fill="#A07030"/>
+      <rect x="0"  y="606" width="1400" height="294" fill="url(#fg2)"/>
+      <rect x="0"  y="606" width="1400" height="294" fill="url(#ft2)" opacity="0.5"/>
+      <!-- counter register -->
+      <rect x="540" y="472" width="320" height="62" rx="8" fill="#1a0800"/>
+      <rect x="552" y="482" width="296" height="42" rx="4" fill="#0a0400"/>
+      <rect x="560" y="488" width="180" height="28" rx="3" fill="#001a08"/>
+      <text x="650" y="506" text-anchor="middle" font-family="'Fredoka One',cursive" font-size="12" fill="#FFD93D">$ REGISTER</text>
+      <rect x="750" y="488" width="88" height="28" rx="4" fill="#FF6B35"/>
+      <text x="794" y="506" text-anchor="middle" font-family="'Fredoka One',cursive" font-size="13" fill="white">PAY</text>
+      <!-- plants -->
+      <rect x="14" y="430" width="66" height="88" rx="8" fill="#8B5520"/>
+      <ellipse cx="47" cy="416" rx="40" ry="32" fill="#2d6a1e"/>
+      <ellipse cx="30" cy="400" rx="22" ry="18" fill="#3a8228"/>
+      <ellipse cx="62" cy="403" rx="20" ry="16" fill="#4aa030"/>
+      <rect x="1320" y="430" width="66" height="88" rx="8" fill="#8B5520"/>
+      <ellipse cx="1353" cy="416" rx="40" ry="32" fill="#2d6a1e"/>
+      <ellipse cx="1336" cy="400" rx="22" ry="18" fill="#3a8228"/>
+      <ellipse cx="1368" cy="403" rx="20" ry="16" fill="#4aa030"/>
+    </svg>
+  </div>
+
+  <!-- Characters + speech bubbles stage -->
+  <div class="conv-stage">
+    <div class="chars-row" id="chars-row">
+      <!-- Cashier -->
+      <div class="char-slot" id="slot-cashier">
+        <div class="char-bubble cb-cashier" id="bubble-cashier"></div>
+        <div class="char-name-tag tag-cashier">🧑‍💼 Cashier</div>
+        <svg width="130" height="154" viewBox="0 0 100 118" id="conv-cashier" xmlns="http://www.w3.org/2000/svg" style="display:block;"></svg>
+      </div>
+      <!-- Customer 1 -->
+      <div class="char-slot" id="slot-c1">
+        <div class="char-bubble cb-c1" id="bubble-c1"></div>
+        <div class="char-name-tag tag-c1">👧 Customer 1</div>
+        <svg width="130" height="154" viewBox="0 0 100 118" id="conv-c1" xmlns="http://www.w3.org/2000/svg" style="display:block;"></svg>
+      </div>
+      <!-- Customer 2 -->
+      <div class="char-slot" id="slot-c2">
+        <div class="char-bubble cb-c2" id="bubble-c2"></div>
+        <div class="char-name-tag tag-c2">👦 Customer 2</div>
+        <svg width="130" height="154" viewBox="0 0 100 118" id="conv-c2" xmlns="http://www.w3.org/2000/svg" style="display:block;"></svg>
+      </div>
+    </div>
+  </div>
+  <button class="conv-next-btn" id="conv-next-btn" onclick="convNext()">TAP TO CONTINUE ▶</button>
+</div>
+
+<!-- ============================================================
+     ORDER SCREEN  (customer 1 then customer 2)
+     ============================================================ -->
+<div id="order-screen" class="screen">
+  <div class="order-header">
+    <h2 id="order-title">🍽️ Round 1: Order Food!</h2>
+    <span class="step-badge" id="order-step">Customer 1</span>
+  </div>
+  <div class="order-body">
+    <!-- Left: animated character + speech -->
+    <div class="order-char-panel" id="order-char-panel">
+      <div class="order-char-stage">
+        <svg width="110" height="128" viewBox="0 0 100 118" id="order-char-svg" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto;"></svg>
+        <div class="order-char-name" id="order-char-name">Customer 1</div>
+        <div class="order-char-role" id="order-char-role">What would you like?</div>
+      </div>
+      <div class="order-speech" id="order-speech">Choose your food! 👇</div>
+      <div id="order-extra-bubbles"></div>
+    </div>
+    <!-- Right: menu -->
+    <div class="action-panel" id="action-panel"></div>
+  </div>
+</div>
+
+<!-- ============================================================
+     GAME SCREEN
+     ============================================================ -->
+<div id="game-screen" class="screen">
+  <div class="game-header">
+    <h2>⚡ Round 2: Mini-Games!</h2>
+    <div class="timer-display" id="timer">60</div>
+    <div style="color:#90B0D0;font-size:11px;text-align:right;">Find orders!<br>Catch money!</div>
+  </div>
+  <div class="game-panels">
+    <div class="cashier-panel">
+      <div class="panel-hdr">
+        <span class="plabel lc">🧑‍💼 Cashier</span>
+        <span class="pscore" id="cashier-score">Score: 0</span>
+      </div>
+      <div class="orders-remind">
+        <strong>🎯 Find these foods:</strong>
+        <span id="reminder-items"></span>
+      </div>
+      <div class="cashier-arena" id="cashier-arena"></div>
+    </div>
+    <div class="customer-panel c1">
+      <div class="panel-hdr">
+        <span class="plabel l1">👧 Customer 1</span>
+        <span class="wallet-bar" style="background:none;border:none;padding:3px 10px;font-size:16px;">💰 $<span id="wallet1">0</span></span>
+      </div>
+      <div class="money-arena" id="arena1"></div>
+      <div class="touch-controls">
+        <div class="touch-btn" id="left1">◀</div>
+        <div style="color:rgba(255,255,255,0.36);font-size:10px;align-self:center;">slide!</div>
+        <div class="touch-btn" id="right1">▶</div>
+      </div>
+      <div class="key-hint">⌨️ A / D — or drag</div>
+    </div>
+    <div class="customer-panel c2">
+      <div class="panel-hdr">
+        <span class="plabel l2">👦 Customer 2</span>
+        <span class="wallet-bar" style="background:none;border:none;padding:3px 10px;font-size:16px;">💰 $<span id="wallet2">0</span></span>
+      </div>
+      <div class="money-arena" id="arena2"></div>
+      <div class="touch-controls">
+        <div class="touch-btn" id="left2">◀</div>
+        <div style="color:rgba(255,255,255,0.36);font-size:10px;align-self:center;">slide!</div>
+        <div class="touch-btn" id="right2">▶</div>
+      </div>
+      <div class="key-hint">⌨️ ← / → — or drag</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAYMENT SCREEN
+     ============================================================ -->
+<div id="payment-screen" class="screen">
+  <div class="pay-bg"></div>
+  <div style="position:relative;z-index:2;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;">
+    <div class="payment-box">
+      <h2>💳 Round 3: Payment Time!</h2>
+      <div id="bill-section" class="bill-section"></div>
+      <div class="dialogue-exchange" id="payment-dialogue"></div>
+      <div id="payment-result" class="payment-result"></div>
+      <div class="cashier-result" id="cashier-result"></div>
+      <button class="big-btn green" onclick="resetGame()">🎮 Play Again!</button>
+    </div>
+  </div>
+  <div class="confetti-container" id="confetti-container"></div>
+</div>
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
+<script>
+// ============================================================
+// ROBLOX-STYLE CHIBI CHARACTER SVG ENGINE
+// ============================================================
+const CHIBI = {
+  cashier:{ skin:'#FDDBB4', hair:'#2E1A00', shirt:'#1565C0', shirtD:'#0D47A1', cheek:'#FFAAAA', style:'bun',     hat:true  },
+  c1:     { skin:'#FFD5AA', hair:'#B71C1C', shirt:'#00897B', shirtD:'#00695C', cheek:'#FFB0C0', style:'pigtails', hat:false },
+  c2:     { skin:'#FDDBB4', hair:'#1A1000', shirt:'#6A1B9A', shirtD:'#4A148C', cheek:'#FFAAAA', style:'spiky',    hat:false },
+};
+
+function chibiSVG(type, talking){
+  const c = CHIBI[type];
+  const mOpen  = 'M37,65 Q46,74 55,65';
+  const mClose = 'M39,63 Q46,68 53,63';
+  const mouth  = talking ? mOpen : mClose;
+  const mFill  = talking ? '#C05030' : 'none';
+  const teeth  = talking ? `<ellipse cx="46" cy="68" rx="5" ry="2.5" fill="white" opacity="0.9"/>` : '';
+
+  // Hair by style
+  const hair = {
+    bun:`<ellipse cx="50" cy="20" rx="23" ry="21" fill="${c.hair}"/>
+         <circle cx="50" cy="10" r="11" fill="${c.hair}"/>
+         <circle cx="40" cy="14" r="7"  fill="${c.hair}"/>
+         <circle cx="60" cy="14" r="7"  fill="${c.hair}"/>`,
+    pigtails:`<ellipse cx="50" cy="22" rx="23" ry="19" fill="${c.hair}"/>
+              <ellipse cx="26" cy="30" rx="11" ry="15" fill="${c.hair}"/>
+              <ellipse cx="74" cy="30" rx="11" ry="15" fill="${c.hair}"/>
+              <ellipse cx="24" cy="44" rx="8"  ry="11" fill="${c.hair}"/>
+              <ellipse cx="76" cy="44" rx="8"  ry="11" fill="${c.hair}"/>`,
+    spiky:`<ellipse cx="50" cy="23" rx="23" ry="19" fill="${c.hair}"/>
+           <polygon points="26,22 18,1 34,15"  fill="${c.hair}"/>
+           <polygon points="39,17 35,0  47,13" fill="${c.hair}"/>
+           <polygon points="52,15 50,0  59,12" fill="${c.hair}"/>
+           <polygon points="64,17 68,1  73,15" fill="${c.hair}"/>`,
+  }[c.style];
+
+  const hat = c.hat ? `
+    <rect x="26" y="21" width="48" height="9"  rx="4.5" fill="${c.shirt}"/>
+    <rect x="32" y="8"  width="36" height="15" rx="7"   fill="${c.shirt}"/>
+    <text x="50" y="21" text-anchor="middle" font-size="6.5" font-family="'Fredoka One',cursive" fill="white" letter-spacing="0.3">CASHIER</text>` : '';
+
+  // Roblox-style: blockier body proportions, thick outlines
+  return `
+    <ellipse cx="50" cy="116" rx="28" ry="5" fill="rgba(0,0,0,0.12)"/>
+    <!-- BODY (boxy Roblox style) -->
+    <rect x="24" y="76" width="52" height="38" rx="10" fill="${c.shirt}"/>
+    <rect x="30" y="76" width="40" height="12" rx="5" fill="${c.shirtD}"/>
+    <polygon points="42,80 58,80 50,92" fill="rgba(255,255,255,0.2)"/>
+    <!-- Arms (boxy) -->
+    <rect x="8"  y="78" width="18" height="28" rx="6" fill="${c.shirt}" transform="rotate(-12,17,92)"/>
+    <rect x="74" y="78" width="18" height="28" rx="6" fill="${c.shirt}" transform="rotate(12,83,92)"/>
+    <!-- Hands (square-ish Roblox) -->
+    <rect x="4"  y="96" width="16" height="14" rx="5" fill="${c.skin}"/>
+    <rect x="80" y="96" width="16" height="14" rx="5" fill="${c.skin}"/>
+    <!-- Legs (boxy) -->
+    <rect x="30" y="112" width="16" height="10" rx="5" fill="${c.shirtD}"/>
+    <rect x="54" y="112" width="16" height="10" rx="5" fill="${c.shirtD}"/>
+    <!-- Hair back -->
+    ${hair}
+    <!-- HEAD (slightly square / Roblox) -->
+    <rect x="22" y="22" width="56" height="54" rx="18" fill="${c.skin}"/>
+    ${hat}
+    <!-- EARS -->
+    <rect x="14" y="36" width="10" height="18" rx="5" fill="${c.skin}"/>
+    <rect x="76" y="36" width="10" height="18" rx="5" fill="${c.skin}"/>
+    <rect x="16" y="39" width="6"  height="12" rx="3" fill="#E8907A" opacity="0.4"/>
+    <rect x="78" y="39" width="6"  height="12" rx="3" fill="#E8907A" opacity="0.4"/>
+    <!-- EYEBROWS (thick Roblox) -->
+    <rect x="31" y="32" width="14" height="4" rx="2" fill="${c.hair}"/>
+    <rect x="55" y="32" width="14" height="4" rx="2" fill="${c.hair}"/>
+    <!-- EYE WHITES (big square-ish) -->
+    <rect x="30" y="37" width="16" height="18" rx="6" fill="white"/>
+    <rect x="54" y="37" width="16" height="18" rx="6" fill="white"/>
+    <!-- IRIS (large expressive) -->
+    <circle cx="38" cy="46" r="7"   fill="#1A0A00"/>
+    <circle cx="62" cy="46" r="7"   fill="#1A0A00"/>
+    <!-- Iris color ring -->
+    <circle cx="38" cy="46" r="5.5" fill="${c.shirt}" opacity="0.6"/>
+    <circle cx="62" cy="46" r="5.5" fill="${c.shirt}" opacity="0.6"/>
+    <!-- Pupil -->
+    <circle cx="38" cy="46" r="3.2" fill="#050200"/>
+    <circle cx="62" cy="46" r="3.2" fill="#050200"/>
+    <!-- Sparkle catchlights (big expressive) -->
+    <circle cx="40" cy="43" r="2.2" fill="white"/>
+    <circle cx="64" cy="43" r="2.2" fill="white"/>
+    <circle cx="36" cy="49" r="1.1" fill="white" opacity="0.55"/>
+    <circle cx="60" cy="49" r="1.1" fill="white" opacity="0.55"/>
+    <!-- CHEEKS -->
+    <ellipse cx="28" cy="53" rx="7" ry="5" fill="${c.cheek}" opacity="0.5"/>
+    <ellipse cx="72" cy="53" rx="7" ry="5" fill="${c.cheek}" opacity="0.5"/>
+    <!-- NOSE (Roblox tiny) -->
+    <circle cx="50" cy="54" r="3" fill="#D08060" opacity="0.5"/>
+    <!-- MOUTH -->
+    <path d="${mouth}" stroke="#C05030" stroke-width="3" fill="${mFill}" stroke-linecap="round"/>
+    ${teeth}
+  `;
+}
+
+// Inject into an SVG element
+function setChibi(el, type, talking){ if(el) el.innerHTML = chibiSVG(type, talking); }
+
+// Talking mouth timer
+const talkTimers = {};
+function startTalking(elId, type){
+  stopTalking(elId);
+  let t = false;
+  talkTimers[elId] = setInterval(()=>{
+    t=!t;
+    const el = document.getElementById(elId);
+    if(el) setChibi(el, type, t);
+  }, 210);
+}
+function stopTalking(elId){
+  clearInterval(talkTimers[elId]); delete talkTimers[elId];
+}
+function stopAllTalking(){ Object.keys(talkTimers).forEach(stopTalking); }
+
+// Init title + conv chibis
+window.addEventListener('DOMContentLoaded', ()=>{
+  ['cashier','c1','c2'].forEach(t => {
+    setChibi(document.getElementById('tc-'+t), t, false);
+    setChibi(document.getElementById('conv-'+t), t, false);
+  });
+  // Cute wave on title – make each one "talk" briefly
+  let i=0;
+  const wave = ()=>{
+    const types=['cashier','c1','c2'];
+    const id='tc-'+types[i%3];
+    startTalking(id, types[i%3]);
+    setTimeout(()=>{ stopTalking(id); setChibi(document.getElementById(id),types[i%3],false); i++; wave(); }, 900);
+  };
+  setTimeout(wave, 600);
+});
+
+
+
+// ============================================================
+// CONVERSATION — simplified for kids
+// Step 0: Cashier greets (auto-plays)
+// Step 1: Customer 1 replies
+// Step 2: Customer 2 replies
+// Step 3: "Proceed to Order" button
+// ============================================================
+let convStep = 0;
+
+function showBubble(speaker, text){
+  ['cashier','c1','c2'].forEach(t=>{
+    const b=document.getElementById('bubble-'+t);
+    b.textContent=''; b.classList.remove('visible');
+    stopTalking('conv-'+t);
+    setChibi(document.getElementById('conv-'+t), t, false);
+  });
+  const bub=document.getElementById('bubble-'+speaker);
+  bub.textContent=text; bub.classList.add('visible');
+  startTalking('conv-'+speaker, speaker);
+  setTimeout(()=>{
+    stopTalking('conv-'+speaker);
+    setChibi(document.getElementById('conv-'+speaker), speaker, false);
+  }, 1500);
+}
+
+function startGame(){
+  showScreen('conv-screen');
+  convStep=0;
+  ['cashier','c1','c2'].forEach(t=>{
+    const b=document.getElementById('bubble-'+t);
+    b.textContent=''; b.classList.remove('visible');
+    setChibi(document.getElementById('conv-'+t), t, false);
+  });
+  const btn=document.getElementById('conv-next-btn');
+  btn.style.display='none';
+  // Cashier speaks first, then show next button
+  setTimeout(()=>{
+    showBubble('cashier','Hello! Welcome to our restaurant! 😊 What would you like to order?');
+    setTimeout(()=>{
+      btn.innerHTML='▶ Customer 1, reply!';
+      btn.style.display='block';
+      convStep=1;
+    }, 2000);
+  }, 500);
+}
+
+function convNext(){
+  const btn=document.getElementById('conv-next-btn');
+  btn.style.display='none';
+  if(convStep===1){
+    showBubble('c1','I\'d like _____, please. 🍽️');
+    setTimeout(()=>{
+      btn.innerHTML='▶ Customer 2, reply!';
+      btn.style.display='block';
+      convStep=2;
+    }, 2200);
+  } else if(convStep===2){
+    showBubble('c2','I\'d like _____, please. 🍽️');
+    setTimeout(()=>{
+      btn.innerHTML='🍽️ Proceed to Order!';
+      btn.style.display='block';
+      convStep=3;
+    }, 2200);
+  } else if(convStep===3){
+    stopAllTalking();
+    ['cashier','c1','c2'].forEach(t=>{
+      document.getElementById('bubble-'+t).classList.remove('visible');
+    });
+    startOrderFlow();
+  }
+}
+
+// ============================================================
+// GAME DATA
+// ============================================================
+const FOOD_MENU = [
+  {id:'hamburger', name:'a hamburger',  emoji:'🍔'},
+  {id:'hotdog',    name:'a hot dog',    emoji:'🌭'},
+  {id:'sandwich',  name:'a sandwich',   emoji:'🥪'},
+  {id:'taco',      name:'a taco',       emoji:'🌮'},
+  {id:'donut',     name:'a donut',      emoji:'🍩'},
+  {id:'cookie',    name:'a cookie',     emoji:'🍪'},
+  {id:'pizza',     name:'some pizza',   emoji:'🍕'},
+  {id:'fries',     name:'some fries',   emoji:'🍟'},
+  {id:'chicken',   name:'some chicken', emoji:'🍗'},
+  {id:'salad',     name:'some salad',   emoji:'🥗'},
+  {id:'rice',      name:'some rice',    emoji:'🍚'},
+  {id:'noodles',   name:'some noodles', emoji:'🍜'},
+  {id:'sushi',     name:'some sushi',   emoji:'🍣'},
+  {id:'popcorn',   name:'some popcorn', emoji:'🍿'},
+];
+const DRINK_MENU = [
+  {id:'soda',      name:'some soda',         emoji:'🥤'},
+  {id:'juice',     name:'some juice',         emoji:'🧃'},
+  {id:'milkshake', name:'some milkshake',     emoji:'🥛'},
+  {id:'coffee',    name:'a cup of coffee',   emoji:'☕'},
+  {id:'tea',       name:'a cup of tea',      emoji:'🍵'},
+  {id:'water',     name:'a bottle of water', emoji:'💧'},
+];
+const ALL_ITEMS = [...FOOD_MENU, ...DRINK_MENU];
+
+// ============================================================
+// STATE
+// ============================================================
+let state = {
+  orderCustomer:'c1',
+  orders:{c1:[],c2:[]}, prices:{},
+  cashierScore:0, wallets:{c1:0,c2:0},
+  gameActive:false, timerInterval:null, timeLeft:60, speedMultiplier:1,
+  basketPositions:{c1:50,c2:50}, keysHeld:{}, touchIds:{},
+};
+let floatingFoodEls = [];
+let orderTalkTimers = {};
+
+function getItem(id){ return ALL_ITEMS.find(x=>x.id===id); }
+function rand(a,b){ return Math.random()*(b-a)+a; }
+function randInt(a,b){ return Math.floor(rand(a,b+1)); }
+function shuffleArr(arr){
+  for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}
+  return arr;
+}
+function joinItems(items){
+  if(!items.length) return '';
+  if(items.length===1) return items[0];
+  if(items.length===2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0,-1).join(', ')}, and ${items[items.length-1]}`;
+}
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ============================================================
+// ORDER FLOW
+// ============================================================
+function startOrderFlow(){
+  state.orderCustomer='c1';
+  showScreen('order-screen');
+  renderOrderScreen('c1');
+}
+
+function renderOrderScreen(customer){
+  const isC1 = customer==='c1';
+  document.getElementById('order-step').textContent = isC1 ? 'Customer 1' : 'Customer 2';
+  document.getElementById('order-char-name').textContent = isC1 ? 'Customer 1' : 'Customer 2';
+  document.getElementById('order-char-role').textContent = 'What would you like?';
+
+  const svgEl = document.getElementById('order-char-svg');
+  setChibi(svgEl, customer, true);
+  Object.values(orderTalkTimers).forEach(clearInterval);
+  let t=false;
+  orderTalkTimers[customer]=setInterval(()=>{
+    t=!t; setChibi(document.getElementById('order-char-svg'), customer, t);
+  },210);
+
+  // Speech bubble
+  const order = state.orders[customer];
+  const names = order.map(id=>getItem(id).name);
+  const sentence = names.length===0 ? 'I\'d like...' : `I'd like ${joinItems(names)}.`;
+  document.getElementById('order-speech').textContent='"'+sentence+'"';
+  document.getElementById('order-speech').className='order-speech'+(isC1?' green':'');
+
+  document.getElementById('action-panel').innerHTML = buildMenuUI(customer);
+}
+
+function buildMenuUI(customer){
+  const order = state.orders[customer];
+  const names = order.map(id=>getItem(id).name);
+  const sentence = names.length===0 ? 'Tap items to order! 👇' : `I'd like ${joinItems(names)}.`;
+
+  const makeGrid = list => list.map(item=>{
+    const sel = order.includes(item.id)?'selected':'';
+    return `<div class="menu-item ${sel}"
+      onclick="toggleItem('${customer}','${item.id}')"
+      ontouchend="event.preventDefault();toggleItem('${customer}','${item.id}')">
+      <span class="food-emoji">${item.emoji}</span>
+      <span class="food-name">${item.name}</span>
+    </div>`;
+  }).join('');
+
+  const lbl    = customer==='c1' ? '👧 Customer 1' : '👦 Customer 2';
+  const btnCls = customer==='c1' ? 'green' : 'blue';
+  return `
+    <div class="sentence-display">"${sentence}"</div>
+    <div class="order-basket">
+      <h4>🛒 ${lbl}'s Order:</h4>
+      <div class="basket-items">
+        ${order.length===0
+          ? '<span style="color:#ccc;font-size:12px">No items yet…</span>'
+          : order.map(id=>{const it=getItem(id);return`<div class="basket-tag">${it.emoji} ${it.name}<button class="rm" onclick="removeItem('${customer}','${id}')">✕</button></div>`;}).join('')}
+      </div>
+    </div>
+    <div class="menu-section"><h3>🍔 Food Menu</h3><div class="menu-grid">${makeGrid(FOOD_MENU)}</div></div>
+    <div class="menu-section"><h3>🥤 Drink Menu</h3><div class="menu-grid">${makeGrid(DRINK_MENU)}</div></div>
+    <button class="big-btn ${btnCls}" onclick="confirmOrder('${customer}')" style="margin-top:10px">✅ Confirm Order!</button>`;
+}
+
+function toggleItem(customer,id){
+  const o=state.orders[customer], i=o.indexOf(id);
+  if(i===-1) o.push(id); else o.splice(i,1);
+  // Update sentence bubble live
+  const names = o.map(xid=>getItem(xid).name);
+  const sentence = names.length===0 ? 'I\'d like...' : `I'd like ${joinItems(names)}.`;
+  document.getElementById('order-speech').textContent='"'+sentence+'"';
+  document.getElementById('action-panel').innerHTML=buildMenuUI(customer);
+}
+function removeItem(customer,id){
+  state.orders[customer]=state.orders[customer].filter(x=>x!==id);
+  toggleItem(customer, id); // re-render via same path won't double-remove, just re-render
+  document.getElementById('action-panel').innerHTML=buildMenuUI(customer);
+}
+function confirmOrder(customer){
+  if(!state.orders[customer].length){alert('Please choose at least one item! 🍽️');return;}
+  Object.values(orderTalkTimers).forEach(clearInterval);
+  if(customer==='c1'){
+    // Brief cashier reaction before c2
+    renderOrderScreen('c2');
+  } else {
+    startMiniGames();
+  }
+}
+
+// ============================================================
+// MINI-GAMES
+// ============================================================
+function startMiniGames(){
+  stopAllTalking(); Object.values(orderTalkTimers).forEach(clearInterval);
+  const allOrdered=[...state.orders.c1,...state.orders.c2];
+  allOrdered.forEach(id=>{if(!state.prices[id])state.prices[id]=randInt(2,12);});
+  showScreen('game-screen');
+  document.getElementById('reminder-items').textContent=
+    [...new Set(allOrdered)].map(id=>`${getItem(id).emoji} ${getItem(id).name}`).join('  |  ');
+  state.cashierScore=0; state.wallets={c1:0,c2:0}; state.timeLeft=60;
+  state.gameActive=true; state.speedMultiplier=1;
+  updateHUD();
+  startTimer(); startCashierGame();
+  startMoneyGame('c1','arena1'); startMoneyGame('c2','arena2');
+  setupControls();
+}
+
+function startTimer(){
+  state.timerInterval=setInterval(()=>{
+    state.timeLeft--;
+    const el=document.getElementById('timer');
+    el.textContent=state.timeLeft;
+    state.speedMultiplier=1+(60-state.timeLeft)/30;
+    if(state.timeLeft<=10){el.classList.add('warning');playBeep();}
+    if(state.timeLeft<=0){clearInterval(state.timerInterval);endMiniGames();}
+  },1000);
+}
+
+// Cashier
+function startCashierGame(){
+  const arena=document.getElementById('cashier-arena');
+  arena.innerHTML=''; floatingFoodEls=[];
+  spawnFloatingFoods(); moveFoods();
+}
+function spawnFloatingFoods(){
+  if(!state.gameActive)return;
+  const arena=document.getElementById('cashier-arena');
+  const W=arena.offsetWidth||300, H=arena.offsetHeight||400;
+  const needed=[...new Set([...state.orders.c1,...state.orders.c2])];
+  const distractors=ALL_ITEMS.filter(f=>!needed.includes(f.id));
+  const pool=[];
+  for(let i=0;i<14;i++){
+    if(i<6&&needed.length>0) pool.push(needed[i%needed.length]);
+    else pool.push(distractors[randInt(0,distractors.length-1)].id);
+  }
+  shuffleArr(pool);
+  arena.innerHTML=''; floatingFoodEls=[];
+  pool.forEach(id=>{
+    const item=getItem(id);
+    const el=document.createElement('div');
+    el.className='floating-food'; el.dataset.id=id; el.textContent=item.emoji;
+    el.style.left=rand(4,W-84)+'px'; el.style.top=rand(4,H-84)+'px';
+    el.style.transform=`rotate(${rand(-15,15)}deg)`;
+    el._vx=(Math.random()<0.5?1:-1)*rand(0.5,1.5);
+    el._vy=(Math.random()<0.5?1:-1)*rand(0.5,1.5);
+    el.addEventListener('click',e=>cashierClick(e,id,el));
+    el.addEventListener('touchstart',e=>{e.preventDefault();cashierClick(e.touches[0],id,el);},{passive:false});
+    arena.appendChild(el); floatingFoodEls.push(el);
+  });
+}
+function moveFoods(){
+  if(!state.gameActive)return;
+  const arena=document.getElementById('cashier-arena');
+  const W=arena.offsetWidth, H=arena.offsetHeight, spd=state.speedMultiplier;
+  floatingFoodEls.forEach(el=>{
+    if(!el.parentNode)return;
+    let x=parseFloat(el.style.left), y=parseFloat(el.style.top);
+    x+=el._vx*spd; y+=el._vy*spd;
+    if(x<0||x>W-80)el._vx*=-1; if(y<0||y>H-80)el._vy*=-1;
+    el.style.left=Math.max(0,Math.min(W-80,x))+'px';
+    el.style.top=Math.max(0,Math.min(H-80,y))+'px';
+  });
+  requestAnimationFrame(moveFoods);
+}
+function cashierClick(e,id,el){
+  if(!state.gameActive)return;
+  const needed=[...new Set([...state.orders.c1,...state.orders.c2])];
+  const arena=document.getElementById('cashier-arena');
+  const rect=arena.getBoundingClientRect();
+  const x=e.clientX-rect.left, y=e.clientY-rect.top;
+  if(needed.includes(id)){ state.cashierScore+=10; el.classList.add('cf'); showScorePop(arena,x,y,'+10','p'); playTone(880,0.1); }
+  else { state.cashierScore=Math.max(0,state.cashierScore-5); el.classList.add('wf'); showScorePop(arena,x,y,'-5','m'); playTone(220,0.1); }
+  updateHUD();
+  setTimeout(()=>el.classList.remove('cf','wf'),300);
+}
+function showScorePop(c,x,y,txt,cls){
+  const p=document.createElement('div'); p.className=`score-pop ${cls}`; p.textContent=txt;
+  p.style.left=(x-18)+'px'; p.style.top=(y-18)+'px';
+  c.appendChild(p); setTimeout(()=>p.remove(),950);
+}
+function updateHUD(){
+  document.getElementById('cashier-score').textContent='Score: '+state.cashierScore;
+  document.getElementById('wallet1').textContent=state.wallets.c1;
+  document.getElementById('wallet2').textContent=state.wallets.c2;
+}
+
+// Money game
+const MONEY=[{e:'🪙',v:1},{e:'💵',v:5},{e:'💴',v:10}];
+function startMoneyGame(customer,arenaId){
+  const arena=document.getElementById(arenaId); arena.innerHTML='';
+  const basket=document.createElement('div');
+  basket.className='basket-catcher'; basket.id='basket-'+customer;
+  basket.textContent='🧺'; basket.style.left='50%';
+  arena.appendChild(basket);
+  dropMoney(customer,arenaId); moveBasketLoop(customer,arenaId);
+}
+function dropMoney(customer,arenaId){
+  if(!state.gameActive)return;
+  const arena=document.getElementById(arenaId); if(!arena)return;
+  const W=arena.offsetWidth||200;
+  const m=MONEY[randInt(0,2)];
+  const el=document.createElement('div'); el.className='falling-money'; el.dataset.value=m.v;
+  const dur=rand(1.5,3.4)/state.speedMultiplier;
+  el.style.animationDuration=dur+'s'; el.style.left=rand(8,W-46)+'px'; el.textContent=m.e;
+  arena.appendChild(el);
+  setTimeout(()=>{if(el.parentNode)el.remove();},dur*1000+100);
+  checkMoneyCollection(customer,arenaId);
+  setTimeout(()=>dropMoney(customer,arenaId),rand(400,1100)/state.speedMultiplier);
+}
+function checkMoneyCollection(customer,arenaId){
+  if(!state.gameActive)return;
+  const arena=document.getElementById(arenaId); if(!arena)return;
+  const basket=document.getElementById('basket-'+customer); if(!basket)return;
+  const bR=basket.getBoundingClientRect();
+  arena.querySelectorAll('.falling-money').forEach(m=>{
+    const mR=m.getBoundingClientRect();
+    if(mR.bottom>=bR.top&&mR.top<=bR.bottom&&mR.right>=bR.left&&mR.left<=bR.right){
+      state.wallets[customer]+=parseInt(m.dataset.value);
+      updateHUD(); m.remove(); playTone(660,0.08);
+      basket.style.transform='scale(1.28)';
+      setTimeout(()=>basket.style.transform='',140);
+    }
+  });
+  if(state.gameActive) requestAnimationFrame(()=>checkMoneyCollection(customer,arenaId));
+}
+function moveBasketLoop(customer,arenaId){
+  if(!state.gameActive)return;
+  const arena=document.getElementById(arenaId);
+  const basket=document.getElementById('basket-'+customer);
+  if(!basket||!arena)return;
+  const W=arena.offsetWidth;
+  let pos=state.basketPositions[customer];
+  if(state.keysHeld[customer==='c1'?'a':'ArrowLeft'])  pos-=3;
+  if(state.keysHeld[customer==='c1'?'d':'ArrowRight']) pos+=3;
+  pos=Math.max(0,Math.min(W-78,pos));
+  state.basketPositions[customer]=pos;
+  basket.style.left=pos+'px';
+  requestAnimationFrame(()=>moveBasketLoop(customer,arenaId));
+}
+
+// Controls
+function setupControls(){
+  state.keysHeld={};
+  document.onkeydown=e=>{state.keysHeld[e.key]=true;};
+  document.onkeyup=e=>{state.keysHeld[e.key]=false;};
+  const setHold=(id,key)=>{
+    const btn=document.getElementById(id); if(!btn)return;
+    btn.addEventListener('pointerdown',e=>{e.preventDefault();btn.setPointerCapture(e.pointerId);state.keysHeld[key]=true;});
+    btn.addEventListener('pointerup',()=>state.keysHeld[key]=false);
+    btn.addEventListener('pointercancel',()=>state.keysHeld[key]=false);
+  };
+  setHold('left1','a'); setHold('right1','d');
+  setHold('left2','ArrowLeft'); setHold('right2','ArrowRight');
+  ['arena1','arena2'].forEach((id,i)=>{
+    const arena=document.getElementById(id), cust=i===0?'c1':'c2';
+    if(!arena)return;
+    arena.addEventListener('mousemove',e=>{
+      const r=arena.getBoundingClientRect();
+      state.basketPositions[cust]=Math.max(0,Math.min(arena.offsetWidth-78,e.clientX-r.left-39));
+    });
+    arena.addEventListener('touchstart',e=>{
+      e.preventDefault(); const r=arena.getBoundingClientRect();
+      for(let t of e.touches){
+        if(t.clientX>=r.left&&t.clientX<=r.right){
+          state.touchIds[cust]=t.identifier;
+          state.basketPositions[cust]=Math.max(0,Math.min(arena.offsetWidth-78,t.clientX-r.left-39));
+          break;
+        }
+      }
+    },{passive:false});
+    arena.addEventListener('touchmove',e=>{
+      e.preventDefault(); const r=arena.getBoundingClientRect();
+      for(let t of e.touches){
+        if(t.identifier===state.touchIds[cust]||(t.clientX>=r.left&&t.clientX<=r.right)){
+          state.basketPositions[cust]=Math.max(0,Math.min(arena.offsetWidth-78,t.clientX-r.left-39));
+          break;
+        }
+      }
+    },{passive:false});
+    arena.addEventListener('touchend',()=>{state.touchIds[cust]=null;},{passive:false});
+  });
+}
+
+// ============================================================
+// END + PAYMENT
+// ============================================================
+function endMiniGames(){
+  state.gameActive=false;
+  document.onkeydown=null; document.onkeyup=null; state.keysHeld={};
+  setTimeout(()=>showPaymentScreen(),800);
+}
+function showPaymentScreen(){
+  showScreen('payment-screen');
+  const c1i=state.orders.c1, c2i=state.orders.c2;
+  let c1t=0, c2t=0;
+  c1i.forEach(id=>c1t+=state.prices[id]||3);
+  c2i.forEach(id=>c2t+=state.prices[id]||3);
+
+  document.getElementById('bill-section').innerHTML=`
+    <div class="bill-card">
+      <h3 class="c1">👧 Customer 1's Bill</h3>
+      ${c1i.map(id=>{const it=getItem(id);return`<div class="bill-item"><span>${it.emoji} ${it.name}</span><span>$${state.prices[id]||3}</span></div>`;}).join('')||'<div class="bill-item" style="color:#ccc">No items</div>'}
+      <div class="bill-total"><span>Total:</span><span>$${c1t}</span></div>
+    </div>
+    <div class="bill-card">
+      <h3 class="c2">👦 Customer 2's Bill</h3>
+      ${c2i.map(id=>{const it=getItem(id);return`<div class="bill-item"><span>${it.emoji} ${it.name}</span><span>$${state.prices[id]||3}</span></div>`;}).join('')||'<div class="bill-item" style="color:#ccc">No items</div>'}
+      <div class="bill-total"><span>Total:</span><span>$${c2t}</span></div>
+    </div>`;
+
+  const c1can=state.wallets.c1>=c1t, c2can=state.wallets.c2>=c2t;
+  document.getElementById('payment-dialogue').innerHTML=`
+    <div class="d-line"><span class="d-who">🧑‍💼 Cashier:</span><span class="d-say">"Customer 1, your total is $${c1t}."</span></div>
+    <div class="d-line"><span class="d-who">👧 Customer 1:</span><span class="d-say">"${c1can?'Here you are! 😊':'Oh no! I don\'t have enough money! 😱'}"</span></div>
+    <div class="d-line"><span class="d-who">🧑‍💼 Cashier:</span><span class="d-say">"${c1can?'Thank you! 😊':'You need more money! 😤'}"</span></div>
+    <div style="border-top:1px dashed #EEE;margin:8px 0"></div>
+    <div class="d-line"><span class="d-who">🧑‍💼 Cashier:</span><span class="d-say">"Customer 2, your total is $${c2t}."</span></div>
+    <div class="d-line"><span class="d-who">👦 Customer 2:</span><span class="d-say">"${c2can?'Here you are! 😊':'Oh no! I don\'t have enough money! 😱'}"</span></div>
+    <div class="d-line"><span class="d-who">🧑‍💼 Cashier:</span><span class="d-say">"${c2can?'Thank you! 😊':'You need more money! 😤'}"</span></div>`;
+
+  document.getElementById('payment-result').innerHTML=`
+    <div class="result-row ${c1can?'success':'fail'}">
+      <span class="result-emoji">${c1can?'🎉':'😢'}</span>
+      <div class="result-text"><div class="label">👧 Customer 1</div>
+      <div class="value ${c1can?'success':'fail'}">Wallet: $${state.wallets.c1} | Bill: $${c1t} — ${c1can?'✅ CAN PAY! Gets food! 🍽️':'❌ CANNOT PAY! No food!'}</div></div>
+    </div>
+    <div class="result-row ${c2can?'success':'fail'}">
+      <span class="result-emoji">${c2can?'🎉':'😢'}</span>
+      <div class="result-text"><div class="label">👦 Customer 2</div>
+      <div class="value ${c2can?'success':'fail'}">Wallet: $${state.wallets.c2} | Bill: $${c2t} — ${c2can?'✅ CAN PAY! Gets food! 🍽️':'❌ CANNOT PAY! No food!'}</div></div>
+    </div>`;
+
+  document.getElementById('cashier-result').innerHTML=`
+    <h3>🧑‍💼 Cashier's Final Score</h3>
+    <div class="big-score">${state.cashierScore} pts</div>
+    <div style="font-size:14px;opacity:0.85;margin-top:6px">${state.cashierScore>=80?'🌟 Amazing! Super Cashier!':state.cashierScore>=40?'👍 Good job! Keep practicing!':'💪 Keep trying! You can do it!'}</div>`;
+
+  if(c1can||c2can) spawnConfetti();
+}
+
+function spawnConfetti(){
+  const c=document.getElementById('confetti-container'); c.innerHTML='';
+  const cols=['#FF6B35','#FFD93D','#06D6A0','#118AB2','#845EC2','#FF6FA8','#FF3366'];
+  for(let i=0;i<90;i++){
+    const el=document.createElement('div'); el.className='confetti-piece';
+    el.style.left=rand(0,100)+'vw'; el.style.top='-20px';
+    el.style.width=rand(8,16)+'px'; el.style.height=rand(8,16)+'px';
+    el.style.background=cols[randInt(0,cols.length-1)];
+    el.style.transform=`rotate(${rand(0,360)}deg)`;
+    el.style.animationDuration=rand(2,4)+'s';
+    el.style.animationDelay=rand(0,1.5)+'s';
+    c.appendChild(el);
+  }
+}
+
+function resetGame(){
+  stopAllTalking(); Object.values(orderTalkTimers).forEach(clearInterval);
+  if(state.timerInterval) clearInterval(state.timerInterval);
+  state={orderCustomer:'c1',orders:{c1:[],c2:[]},prices:{},cashierScore:0,wallets:{c1:0,c2:0},gameActive:false,timerInterval:null,timeLeft:60,speedMultiplier:1,basketPositions:{c1:50,c2:50},keysHeld:{},touchIds:{}};
+  showScreen('title-screen');
+}
+
+// ============================================================
+// AUDIO
+// ============================================================
+let audioCtx=null;
+function getAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+function playTone(freq,dur){
+  try{
+    const ctx=getAudio(),osc=ctx.createOscillator(),gain=ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value=freq;
+    gain.gain.setValueAtTime(0.1,ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);
+    osc.start(); osc.stop(ctx.currentTime+dur);
+  }catch(e){}
+}
+function playBeep(){playTone(440,0.15);}
+</script>
+</body>
+</html>
